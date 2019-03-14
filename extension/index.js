@@ -18,6 +18,9 @@ module.exports = (nodecg) => {
   const service = require('./service')
   nodecg.mount(service)
 
+  const webhooks = require('./webhooks')
+  nodecg.mount(webhooks)
+
   const api = require('./api')
 
   require('./modules/eventLog')
