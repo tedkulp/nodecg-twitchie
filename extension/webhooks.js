@@ -160,13 +160,14 @@ app.post('/webhook', (request, response, next) => {
       log.info('sending follow event for', data.from_name)
       nodecg.sendMessage('webhook.follow', {
         name: data.from_name,
-        channel: currentChannelId,
+        channelId: currentChannelId,
+        channel: `#${currentChannelName}`
       })
     }
     response.status(200).json({})
   } else {
     response.status(400).json({
-      error: 'ERROR: Invalid request!',
+      error: 'ERROR: Invalid request!'
     })
   }
 })

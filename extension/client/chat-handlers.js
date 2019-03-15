@@ -151,6 +151,9 @@ module.exports = (chat) => {
 
   chat.on('resub', (channel, username, months, messageText, userstate, extra = {}) => {
     const message = getMessageDetails(messageText)
+    const streakMonths = userstate['msg-param-streak-months'] || 0; // number of streak months
+    const cumulativeMonths = userstate['msg-param-cumulative-months'] || 0; // number of cumulative months subscribed
+    const shouldShareStreak = userstate['msg-param-should-share-streak'] || 0; // Bool on whether the user has opted to share streak-months
 
     send({
       scope: 'channel',
@@ -162,6 +165,9 @@ module.exports = (chat) => {
         message,
         resub: true,
         prime: !!extra.prime,
+        streakMonths,
+        cumulativeMonths,
+        shouldShareStreak,
       },
     })
   })
