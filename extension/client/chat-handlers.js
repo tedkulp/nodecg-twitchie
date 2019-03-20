@@ -39,13 +39,39 @@ module.exports = (chat) => {
     const user = getUserDetails(userstate)
 
     send({
-      action: message.type,
+      action: message.type, // 'action', 'chat', 'whisper'
       payload: {
         channel,
         user,
         message,
       }
     })
+  })
+
+  chat.on('messagedeleted', (channel, username, deletedMessage, userstate) => {
+    // console.log('messagedeleted', { channel, username, deletedMessage, userstate })
+    const messageId = userstate['target-msg-id']
+    // console.log('messageId', messageId);
+    if (messageId) {
+      // console.log('sending....', {
+      //   action: 'messagedeleted',
+      //   payload: {
+      //     channel,
+      //     username,
+      //     deletedMessage,
+      //     messageId,
+      //   }
+      // });
+      send({
+        action: 'messagedeleted',
+        payload: {
+          channel,
+          username,
+          deletedMessage,
+          messageId,
+        }
+      })
+    }
   })
 
   // cheers contain bits within the userstate and may have special emotes in
@@ -74,6 +100,7 @@ module.exports = (chat) => {
 
   // handle when users have been naughty
   chat.on('ban', (channel, user, reason) => {
+    // console.log('ban', { channel, user, reason });
     send({
       action: 'ban',
       payload: { channel, user, reason },
@@ -81,6 +108,7 @@ module.exports = (chat) => {
   })
 
   chat.on('timeout', (channel, user, reason, duration) => {
+    // console.log('timeout', { channel, user, reason, duration });
     send({
       action: 'timeout',
       payload: { channel, user, reason, duration },
@@ -151,9 +179,8 @@ module.exports = (chat) => {
 
   chat.on('resub', (channel, username, months, messageText, userstate, extra = {}) => {
     const message = getMessageDetails(messageText)
-    const streakMonths = userstate['msg-param-streak-months'] || 0; // number of streak months
-    const cumulativeMonths = userstate['msg-param-cumulative-months'] || 0; // number of cumulative months subscribed
-    const shouldShareStreak = userstate['msg-param-should-share-streak'] || 0; // Bool on whether the user has opted to share streak-months
+    const cumulativeMonths = userstate['msg-param-cumulative-months'] || 0 // number of cumulative months subscribed
+    const shouldShareStreak = userstate['msg-param-should-share-streak'] || false // Bool on whether the user has opted to share streak-months
 
     send({
       scope: 'channel',
@@ -165,18 +192,25 @@ module.exports = (chat) => {
         message,
         resub: true,
         prime: !!extra.prime,
-        streakMonths,
         cumulativeMonths,
         shouldShareStreak,
       },
     })
   })
 
-  chat.on('hosted', (channel, host, viewers) => {
+  chat.on('raided', (channel, username, viewers) => {
+    send({
+      scope: 'channel',
+      action: 'raided',
+      payload: { channel, username, viewers },
+    })
+  })
+
+  chat.on('hosted', (channel, host, viewers, autohost) => {
     send({
       scope: 'channel',
       action: 'hosted',
-      payload: { channel, host, viewers },
+      payload: { channel, host, viewers, autohost },
     })
   })
 
@@ -193,6 +227,60 @@ module.exports = (chat) => {
       scope: 'channel',
       action: 'unhost',
       payload: { channel, viewers },
+    })
+  })
+
+  chat.on('subgift', (channel, username, streakMonths, recipient, methods, userstate) => {
+    // console.log('subgift', { channel, username, streakMonths, recipient, methods, userstate });
+    const senderCount = userstate['msg-param-sender-count'] || 0
+    send({
+      scope: 'channel',
+      action: 'subgift',
+      payload: {
+        channel,
+        username,
+        streakMonths,
+        numberOfSubs: 1,
+        recipient,
+        methods,
+        senderCount,
+        mystery: false,
+      },
+    })
+  })
+
+  chat.on('submysterygift', (channel, username, numberOfSubs, methods, userstate) => {
+    // console.log('submysterygift', { channel, username, numberOfSubs, methods, userstate });
+    const senderCount = userstate['msg-param-sender-count'] || 0
+    send({
+      scope: 'channel',
+      action: 'subgift',
+      payload: {
+        channel,
+        username,
+        streakMonths: null,
+        numberOfSubs,
+        recipient: null,
+        methods,
+        senderCount,
+        mystery: true,
+      },
+    })
+  })
+
+  chat.on('giftpaidupgrade', (channel, username, sender) => {
+    send({
+      scope: 'channel',
+      action: 'giftpaidupgrade',
+      payload: { channel, username, sender, anonymous: false },
+    })
+  })
+
+  chat.on('anongiftpaidupgrade', (channel, username) => {
+    send({
+      scope: 'channel',
+      action: 'giftpaidupgrade',
+      payload: { channel, username, sender: null, anonymous: true },
     })
   })
 }

@@ -18,9 +18,10 @@ const twitch = {
 
 twitch.isConnected = () => !!twitch.client
 
-twitch.disconnect = () => twitch.client.disconnect()
-  .then(() => { twitch.client = undefined })
-  .catch(() => { twitch.client = undefined })
+twitch.disconnect = () => twitch.client &&
+  twitch.client.disconnect()
+    .then(() => { twitch.client = undefined })
+    .catch(() => { twitch.client = undefined })
 
 twitch.connect = ({ username, token }) => {
   twitch.auth.username = username
